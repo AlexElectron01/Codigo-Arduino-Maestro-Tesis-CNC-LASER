@@ -1,0 +1,160 @@
+#include <SD.h>
+#include <SPI.h>
+
+const int chipSelect = 10; // Ajusta este pin según tu configuración de hardware
+
+File myFile; // Archivo para leer
+int run = 0;
+int marcha = 19;
+int estado = 18;
+String input;
+int rp = 0;
+
+void setup() {
+
+  pinMode(marcha, INPUT);
+  pinMode(estado, OUTPUT);
+
+  // Iniciar la comunicación serie
+  Serial.begin(115200);
+  //Serial.begin(9600);
+  while (!Serial) {
+    // Esperar a que se abra el puerto serie
+  }
+
+  // Iniciar la comunicación con la tarjeta SD
+  //Serial.print("Iniciando la tarjeta SD...");
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Error al inicializar la tarjeta SD!");
+    return;
+  }
+  //Serial.println("Tarjeta SD inicializada.");
+  
+  // Abre el archivo en modo lectura
+  myFile = SD.open("codigo.txt");
+  if (!myFile) {
+    Serial.println("Error al abrir el archivo.");
+  }
+  digitalWrite(estado,LOW);
+  delay(250);
+  digitalWrite(estado,HIGH);
+  delay(250);
+  digitalWrite(estado,LOW);
+  delay(250);
+  digitalWrite(estado,HIGH);
+  delay(250);
+  digitalWrite(estado,LOW);
+}
+
+void loop() {
+  
+  int marchaEstado = digitalRead(marcha);
+
+  if(marchaEstado == 1 && run == 0){
+    digitalWrite(estado,HIGH);
+    run = 1;
+    
+    while(run == 1){
+      // Leer y escribir la siguiente línea del archivo
+      if (myFile) {
+        String line = "";
+        char ch;
+        while (myFile.available()) {
+          ch = myFile.read();
+          if (ch == '\n') {
+            break;
+          }
+          line += ch;
+        }
+        Serial.println(line);
+
+        // Si llegamos al final del archivo, reiniciamos la lectura
+        if (!myFile.available()) {
+          myFile.seek(0);
+          run = 0;
+          //asm volatile("jmp 0x00");
+          break;
+        }
+      }
+      if(run == 0){
+        break;
+      }
+
+      // Verificar si hay datos disponibles en el Monitor Serie
+      while (!Serial.available()) {
+      }
+      input = Serial.readStringUntil('\n');
+      input.trim(); // Eliminar cualquier espacio en blanco adicional
+      // Comparar la entrada con "OK"
+      if (input.equalsIgnoreCase("OK")) {
+        
+      } else {
+        // Resetear el contador si la entrada no es "OK"
+        run = 0;
+        asm volatile("jmp 0x00");
+        break;
+      }
+
+      
+      while (!Serial.available()) {
+      }
+      // Leer la entrada del Monitor Serie
+      input = Serial.readStringUntil('\n');
+      input.trim(); // Eliminar cualquier espacio en blanco adicional
+      // Comparar la entrada con "OK"
+      if (input.equalsIgnoreCase("OK")) {
+        
+      } else {
+        // Resetear el contador si la entrada no es "OK"
+        run = 0;
+        asm volatile("jmp 0x00");
+        break;
+      }
+
+      while (!Serial.available()) {
+      }
+      // Leer la entrada del Monitor Serie
+      input = Serial.readStringUntil('\n');
+      input.trim(); // Eliminar cualquier espacio en blanco adicional
+      // Comparar la entrada con "OK"
+      if (input.equalsIgnoreCase("OK")) {
+        
+      } else {
+        // Resetear el contador si la entrada no es "OK"
+        run = 0;
+        asm volatile("jmp 0x00");
+        break;
+      }
+
+      while(rp == 0){
+        delay(50);
+        Serial.print("?");
+        while (!Serial.available()) {
+        }
+
+        // Leer la entrada del Monitor Serie
+        input = Serial.readStringUntil('\n');
+        if (input.indexOf("Idle") != -1) {
+          //Serial.println("Subcadena 'Idle' encontrada.");
+          rp = 1;
+        } else {
+          rp = 0;
+        }
+
+      }
+      rp = 0;
+      
+      //delay(3000);
+    }
+    digitalWrite(estado,LOW);
+    delay(1000);
+    asm volatile("jmp 0x00");
+
+  }else{
+    digitalWrite(estado,LOW);
+    //digitalWrite(estado,HIGH);
+    //delay(250);
+  }
+
+  
+}
